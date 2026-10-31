@@ -1,0 +1,51 @@
+{
+  "restaurant": {
+    "name": "RestoManager",
+    "tagline": "Kitchen & Order Control"
+  },
+  "stats": [
+    {
+      "id": "total",
+      "label": "Total Orders",
+      "value": 248,
+      "change": 12,
+      "changeLabel": "vs last week",
+      "trend": "up",
+      "icon": "ClipboardList"
+    },
+    {
+      "id": "pending",
+      "label": "Pending Orders",
+      "value": 34,
+      "change": -5,
+      "changeLabel": "vs last week",
+      "trend": "down",
+      "icon": "Clock"
+    },
+    {
+      "id": "preparing",
+      "label": "Preparing",
+      "value": 18,
+      "change": 3,
+      "changeLabel": "vs last week",
+      "trend": "up",
+      "icon": "ChefHat"
+    },
+    {
+      "id": "completed",
+      "label": "Completed",
+      "value": 196,
+      "change": 21,
+      "changeLabel": "vs last week",
+      "trend": "up",
+      "icon": "CheckCircle"
+    }
+  ],
+  "recentActivity": [
+    { "id": 1, "message": "Order #1042 marked as delivered", "time": "2 min ago" },
+    { "id": 2, "message": "New order #1043 received from Arjun Mehta", "time": "5 min ago" },
+    { "id": 3, "message": "Order #1040 payment confirmed", "time": "12 min ago" },
+    { "id": 4, "message": "Order #1038 shipped via Dine-in", "time": "28 min ago" },
+    { "id": 5, "message": "Order #1035 cancelled by customer", "time": "1 hr ago" }
+  ]
+}

@@ -86,7 +86,7 @@ export default function OrderCard({ order }: { order: order }) {
         </div>
       </CardContent>
 
-      <CardFooter className="gap-2 pt-0">
+      <CardFooter className="mt-auto gap-2">
         <Button variant="outline" className="flex-1">
           Cancel Order
         </Button>
