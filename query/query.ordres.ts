@@ -10,10 +10,11 @@ type orderParams = {
     | "refunded";
   page?: number;
   limit?: number;
+  expand?: boolean
 };
 
-export type orderRes = {
-  data: {
+export type order = {
+     
     created_at: string;
     currency: string;
     customer_id: string;
@@ -24,7 +25,16 @@ export type orderRes = {
     subtotal: number;
     tax: number;
     total: number;
-  };
+    customer:{
+        id: number;
+        name:string;
+        phone:number;
+    }
+  
+}
+
+export type orderRes = {
+  data:order[];
   meta: {
     page: number;
     limit: number;
@@ -38,7 +48,7 @@ export async function GetOrders(params: orderParams):Promise<orderRes>  {
   if (params.status) query.set("status", params.status);
   if (params.page) query.set("page", params.page.toString());
   if (params.limit) query.set("limit", params.limit.toString());
-
+  if(params.expand) query.set("expand","customer")
   const response = await fetch(`${baseUrl}/orders?${query}`);
   if (!response.ok) {
     throw new Error(`Error while fetching orders ${response.status}`);
