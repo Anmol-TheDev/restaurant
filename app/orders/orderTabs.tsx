@@ -1,12 +1,15 @@
 "use client"
 
 import OrderCard from "@/components/orderCard"
+import { Pagination } from "@/components/pagination"
 import { SearchBar, useDebounce } from "@/components/searchBar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type order, type orderRes, GetOrders } from "@/query/query.ordres"
 import { useEffect, useState } from "react"
 
 type Status = "pending" | "paid" | "shipped" | "delivered" | "cancelled" | "refunded"
+
+const LIMIT = 6
 
 const TABS: { label: string; value: Status }[] = [
     { label: "Pending",   value: "pending"   },
@@ -25,18 +28,22 @@ function matchesQuery(order: order, query: string): boolean {
     )
 }
 
+type Meta = orderRes["meta"]
+
 function OrderGrid({ status, search }: { status: Status; search: string }) {
     const [data, setData] = useState<order[]>([])
+    const [meta, setMeta] = useState<Meta>({ page: 1, limit: LIMIT, total: 0, pages: 1 })
+    const [page, setPage] = useState(1)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<{ code: number; message: string } | null>(null)
 
-    const load = async () => {
+    const load = async (p: number) => {
         setLoading(true)
         setError(null)
-        setData([])
         try {
-            const res: orderRes = await GetOrders({ status, limit: 6, expand: true })
+            const res: orderRes = await GetOrders({ status, limit: LIMIT, page: p, expand: true })
             setData(res.data)
+            setMeta(res.meta)
         } catch (err: unknown) {
             const code = (err as { status?: number }).status ?? 0
             const message =
@@ -50,17 +57,26 @@ function OrderGrid({ status, search }: { status: Status; search: string }) {
     }
 
     useEffect(() => {
-        load()
+        setPage(1)
+        load(1)
     }, [status])
+
+    const handlePageChange = (p: number) => {
+        setPage(p)
+        load(p)
+    }
 
     const filtered = search ? data.filter((o) => matchesQuery(o, search)) : data
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="h-64 animate-pulse rounded-2xl bg-muted" />
-                ))}
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {Array.from({ length: LIMIT }).map((_, i) => (
+                        <div key={i} className="h-64 animate-pulse rounded-2xl bg-muted" />
+                    ))}
+                </div>
+                <div className="h-7 w-64 animate-pulse rounded-lg bg-muted" />
             </div>
         )
     }
@@ -73,7 +89,7 @@ function OrderGrid({ status, search }: { status: Status; search: string }) {
                 </p>
                 <p className="text-muted-foreground">{error.message}</p>
                 <button
-                    onClick={load}
+                    onClick={() => load(page)}
                     className="mt-1 rounded-full border px-4 py-1.5 text-xs font-medium transition hover:bg-muted"
                 >
                     Retry
@@ -91,10 +107,22 @@ function OrderGrid({ status, search }: { status: Status; search: string }) {
     }
 
     return (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((order) => (
-                <OrderCard key={order.id} order={order} />
-            ))}
+        <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {filtered.map((order) => (
+                    <OrderCard key={order.id} order={order} />
+                ))}
+            </div>
+
+            {!search && meta.pages > 1 && (
+                <Pagination
+                    page={page}
+                    totalPages={meta.pages}
+                    total={meta.total}
+                    limit={meta.limit}
+                    onPageChange={handlePageChange}
+                />
+            )}
         </div>
     )
 }
