@@ -1,0 +1,48 @@
+const baseUrl = process.env.NEXT_PUBLIC_BASEURL;
+
+type orderParams = {
+  status?:
+    | "pending"
+    | "paid"
+    | "shipped"
+    | "delivered"
+    | "cancelled"
+    | "refunded";
+  page?: number;
+  limit?: number;
+};
+
+export type orderRes = {
+  data: {
+    created_at: string;
+    currency: string;
+    customer_id: string;
+    discount: number;
+    id: number;
+    shipping_method: string;
+    status: string;
+    subtotal: number;
+    tax: number;
+    total: number;
+  };
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+};
+
+export async function GetOrders(params: orderParams):Promise<orderRes>  {
+  const query = new URLSearchParams();
+  if (params.status) query.set("status", params.status);
+  if (params.page) query.set("page", params.page.toString());
+  if (params.limit) query.set("limit", params.limit.toString());
+
+  const response = await fetch(`${baseUrl}/orders?${query}`);
+  if (!response.ok) {
+    throw new Error(`Error while fetching orders ${response.status}`);
+  }
+  const data = await response.json();
+  return data;
+}
