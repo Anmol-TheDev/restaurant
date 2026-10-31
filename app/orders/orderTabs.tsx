@@ -1,6 +1,7 @@
 "use client"
 
 import OrderCard from "@/components/orderCard"
+import { SearchBar, useDebounce } from "@/components/searchBar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type order, type orderRes, GetOrders } from "@/query/query.ordres"
 import { useEffect, useState } from "react"
@@ -16,7 +17,15 @@ const TABS: { label: string; value: Status }[] = [
     { label: "Refunded",  value: "refunded"  },
 ]
 
-function OrderGrid({ status }: { status: Status }) {
+function matchesQuery(order: order, query: string): boolean {
+    const q = query.toLowerCase()
+    return (
+        order.customer.name.toLowerCase().includes(q) ||
+        order.id.toString().includes(q)
+    )
+}
+
+function OrderGrid({ status, search }: { status: Status; search: string }) {
     const [data, setData] = useState<order[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<{ code: number; message: string } | null>(null)
@@ -44,6 +53,8 @@ function OrderGrid({ status }: { status: Status }) {
         load()
     }, [status])
 
+    const filtered = search ? data.filter((o) => matchesQuery(o, search)) : data
+
     if (loading) {
         return (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -57,7 +68,6 @@ function OrderGrid({ status }: { status: Status }) {
     if (error) {
         return (
             <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-sm">
-               
                 <p className="font-medium text-foreground">
                     {error.code === 429 ? "Rate limit reached" : "Failed to load orders"}
                 </p>
@@ -72,17 +82,17 @@ function OrderGrid({ status }: { status: Status }) {
         )
     }
 
-    if (data.length === 0) {
+    if (filtered.length === 0) {
         return (
             <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed text-sm text-muted-foreground">
-                No {status} orders found.
+                {search ? `No results for "${search}"` : `No ${status} orders found.`}
             </div>
         )
     }
 
     return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {data.map((order) => (
+            {filtered.map((order) => (
                 <OrderCard key={order.id} order={order} />
             ))}
         </div>
@@ -91,20 +101,31 @@ function OrderGrid({ status }: { status: Status }) {
 
 export default function OrderTabs() {
     const [active, setActive] = useState<Status>("pending")
+    const [rawSearch, setRawSearch] = useState("")
+    const search = useDebounce(rawSearch, 300)
 
     return (
-        <Tabs value={active} onValueChange={(v) => setActive(v as Status)}>
-            <TabsList>
-                {TABS.map((tab) => (
-                    <TabsTrigger key={tab.value} value={tab.value}>
-                        {tab.label}
-                    </TabsTrigger>
-                ))}
-            </TabsList>
+        <Tabs className="" value={active} onValueChange={(v) => setActive(v as Status)}>
+            <div className="flex items-center justify-between gap-4 mb-4">
+                <TabsList>
+                    {TABS.map((tab) => (
+                        <TabsTrigger key={tab.value} value={tab.value}>
+                            {tab.label}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+
+                <SearchBar
+                    value={rawSearch}
+                    onChange={setRawSearch}
+                    placeholder="Search by name or order ID…"
+                    className="w-64"
+                />
+            </div>
 
             {TABS.map((tab) => (
                 <TabsContent key={tab.value} value={tab.value}>
-                    <OrderGrid status={tab.value} />
+                    <OrderGrid status={tab.value} search={search} />
                 </TabsContent>
             ))}
         </Tabs>
