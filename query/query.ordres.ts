@@ -1,5 +1,12 @@
 const baseUrl = process.env.NEXT_PUBLIC_BASEURL;
 
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message)
+    this.name = "ApiError"
+  }
+}
+
 type orderParams = {
   status?:
     | "pending"
@@ -51,7 +58,7 @@ export async function GetOrders(params: orderParams):Promise<orderRes>  {
   if(params.expand) query.set("expand","customer")
   const response = await fetch(`${baseUrl}/orders?${query}`);
   if (!response.ok) {
-    throw new Error(`Error while fetching orders ${response.status}`);
+    throw new ApiError(response.status, `Error while fetching orders: ${response.status}`);
   }
   const data = await response.json();
   return data;
